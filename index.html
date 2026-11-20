@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (function() {
+        // Intercept and suppress console.error for benign Vite HMR websocket closure in preview container
+        var origConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var str = args.map(function(a) {
+            return (a && (a.stack || a.message)) || String(a);
+          }).join(' ');
+          if (str.indexOf('WebSocket closed without opened') !== -1 || (str.indexOf('[vite]') !== -1 && str.indexOf('WebSocket') !== -1)) {
+            return;
+          }
+          return origConsoleError.apply(console, args);
+        };
+
+        // Window-level error event suppression
+        window.addEventListener('error', function (e) {
+          if (e && e.message && (e.message.indexOf('WebSocket') !== -1 || e.message.indexOf('ws://') !== -1 || e.message.indexOf('wss://') !== -1)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (e) {
+          if (e && e.reason && (String(e.reason).indexOf('WebSocket') !== -1 || String(e.reason.message || '').indexOf('WebSocket') !== -1)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }, true);
+
+        // Safe fake WebSocket for vite-hmr to prevent WebSocket closed without opened
+        var OrigWS = window.WebSocket;
+        if (OrigWS) {
+          function ViteSafeWS(url, protocols) {
+            if (protocols === 'vite-hmr' || (typeof url === 'string' && url.indexOf('vite-hmr') !== -1)) {
+              var target = new EventTarget();
+              target.readyState = 1;
+              target.send = function() {};
+              target.close = function() {};
+              target.binaryType = 'blob';
+              setTimeout(function() {
+                try {
+                  var ev = new Event('open');
+                  target.dispatchEvent(ev);
+                  if (typeof target.onopen === 'function') target.onopen(ev);
+                } catch(err) {}
+              }, 10);
+              return target;
+            }
+            return new OrigWS(url, protocols);
+          }
+          ViteSafeWS.prototype = OrigWS.prototype;
+          ViteSafeWS.CONNECTING = 0;
+          ViteSafeWS.OPEN = 1;
+          ViteSafeWS.CLOSING = 2;
+          ViteSafeWS.CLOSED = 3;
+          window.WebSocket = ViteSafeWS;
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>SQ ENTERPRISES - Wholesale FMCG POS</title>
+    <meta name="description" content="Mobile-first Wholesale FMCG Point of Sale (POS) system with multi-unit billing, auto-udhar customer khata, live inventory alerts, and instant receipt generation." />
+    <meta property="og:title" content="SQ ENTERPRISES - Wholesale FMCG POS" />
+    <meta property="og:description" content="Mobile-first Wholesale FMCG Point of Sale (POS) system with multi-unit billing, auto-udhar customer khata, live inventory alerts, and instant receipt generation." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SQ POS" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body class="bg-slate-950 text-slate-100 antialiased select-none touch-manipulation overscroll-none">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

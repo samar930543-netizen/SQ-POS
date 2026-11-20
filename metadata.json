@@ -1,0 +1,6 @@
+{
+  "name": "SQ Enterprises FMCG POS",
+  "description": "Mobile-first Wholesale FMCG Point of Sale (POS) system with multi-unit billing, auto-udhar customer khata, live inventory alerts, and instant receipt generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
